@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>EduMS — Đăng nhập</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div class="auth-wrap">
+  <div class="auth-orb auth-orb1"></div>
+  <div class="auth-orb auth-orb2"></div>
+
+  <!-- Left panel -->
+  <div class="auth-left">
+    <div class="auth-brand">
+      <div class="auth-brand-ico">🎓</div>
+      <div>
+        <div class="auth-brand-name">EduMS</div>
+        <div class="auth-brand-tag">Education Management System</div>
+      </div>
+    </div>
+    <h1 class="auth-headline">Hệ thống<br>quản lý <em>giáo dục</em><br>thông minh</h1>
+    <p class="auth-desc">Nền tảng quản lý sinh viên, giảng viên và khóa học toàn diện — hiện đại, đơn giản, hiệu quả.</p>
+    <div class="feat-list">
+      <div class="feat-item"><div class="feat-dot">📊</div><span>Theo dõi kết quả học tập theo thời gian thực</span></div>
+      <div class="feat-item"><div class="feat-dot">📚</div><span>Đăng ký và quản lý môn học dễ dàng</span></div>
+      <div class="feat-item"><div class="feat-dot">🔒</div><span>Phân quyền chặt chẽ theo từng vai trò</span></div>
+      <div class="feat-item"><div class="feat-dot">🗄️</div><span>Lưu trữ dữ liệu an toàn trên MySQL</span></div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="auth-right">
+    <div class="auth-card">
+      <div class="tab-sw">
+        <button class="tab-btn on"  id="tab-login-btn"    onclick="switchTab('login')">Đăng nhập</button>
+        <button class="tab-btn"     id="tab-register-btn" onclick="switchTab('register')">Đăng ký</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="pane-login">
+        <div class="auth-card-title">Chào mừng trở lại</div>
+        <div class="auth-card-sub">Đăng nhập để tiếp tục</div>
+        <div id="login-alert"></div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="l-email" class="form-control" placeholder="email@example.com" autocomplete="email">
+        </div>
+        <div class="form-group" style="margin-bottom:20px">
+          <label class="form-label">Mật khẩu</label>
+          <input type="password" id="l-pw" class="form-control" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary btn-full btn-lg" id="login-btn" onclick="doLogin()">Đăng nhập</button>
+
+        <div class="demo-grid">
+          <div class="demo-lbl">Tài khoản demo — click để điền</div>
+          <div class="demo-cards">
+            <div class="demo-card" onclick="fillDemo('admin@edums.edu','admin123')">
+              <div><div class="demo-nm">Administrator</div><div class="demo-em">admin@edums.edu</div></div>
+              <span class="badge br">Admin</span>
+            </div>
+            <div class="demo-card" onclick="fillDemo('teacher1@edums.edu','teacher123')">
+              <div><div class="demo-nm">Nguyễn Văn An</div><div class="demo-em">teacher1@edums.edu</div></div>
+              <span class="badge ba">Giảng viên</span>
+            </div>
+            <div class="demo-card" onclick="fillDemo('student1@edums.edu','student123')">
+              <div><div class="demo-nm">Lê Văn Cường</div><div class="demo-em">student1@edums.edu</div></div>
+              <span class="badge bi">Sinh viên</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="pane-register" style="display:none">
+        <div class="auth-card-title">Tạo tài khoản</div>
+        <div class="auth-card-sub">Điền thông tin để đăng ký</div>
+        <div id="reg-alert"></div>
+        <div class="form-group">
+          <label class="form-label">Họ và tên</label>
+          <input type="text" id="r-name" class="form-control" placeholder="Nguyễn Văn A">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="r-email" class="form-control" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mật khẩu <span style="color:var(--t3);font-weight:400">(tối thiểu 6 ký tự)</span></label>
+          <input type="password" id="r-pw" class="form-control" placeholder="••••••••">
+        </div>
+        <div class="form-group" style="margin-bottom:20px">
+          <label class="form-label">Vai trò</label>
+          <select id="r-role" class="form-control">
+            <option value="student">Sinh viên</option>
+            <option value="teacher">Giảng viên</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-full btn-lg" id="reg-btn" onclick="doRegister()">Tạo tài khoản</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+// Auto-redirect if already logged in
+(async () => {
+  if (Token.get()) {
+    const r = await get('/me');
+    if (r.ok && r.data.user) { currentUser = r.data.user; redirectToDashboard(); return; }
+    Token.clear();
+  }
+})();
+
+function switchTab(tab) {
+  document.getElementById('pane-login').style.display    = tab === 'login'    ? '' : 'none';
+  document.getElementById('pane-register').style.display = tab === 'register' ? '' : 'none';
+  document.getElementById('tab-login-btn').classList.toggle('on', tab === 'login');
+  document.getElementById('tab-register-btn').classList.toggle('on', tab === 'register');
+}
+
+function fillDemo(email, pw) {
+  document.getElementById('l-email').value = email;
+  document.getElementById('l-pw').value    = pw;
+  document.getElementById('login-alert').innerHTML = '';
+  document.getElementById('l-email').focus();
+}
+
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const pw    = document.getElementById('l-pw').value;
+  const al    = document.getElementById('login-alert');
+  al.innerHTML = '';
+  if (!email || !pw) { al.innerHTML = '<div class="alert alert-err">Vui lòng điền đầy đủ thông tin</div>'; return; }
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spin" style="width:18px;height:18px;margin:0 auto;border-width:2px"></div>';
+
+  const r = await post('/login', { email, password: pw });
+  btn.disabled = false; btn.textContent = 'Đăng nhập';
+
+  if (r.ok && r.data.token) {
+    Token.set(r.data.token);
+    currentUser = r.data.user;
+    redirectToDashboard();
+  } else {
+    al.innerHTML = `<div class="alert alert-err">${r.data.message || 'Đăng nhập thất bại'}</div>`;
+  }
+}
+
+async function doRegister() {
+  const full_name = document.getElementById('r-name').value.trim();
+  const email     = document.getElementById('r-email').value.trim();
+  const password  = document.getElementById('r-pw').value;
+  const role      = document.getElementById('r-role').value;
+  const al        = document.getElementById('reg-alert');
+  al.innerHTML    = '';
+
+  const btn = document.getElementById('reg-btn');
+  btn.disabled = true; btn.textContent = 'Đang xử lý...';
+
+  const r = await post('/register', { full_name, email, password, role });
+  btn.disabled = false; btn.textContent = 'Tạo tài khoản';
+
+  if (r.ok) {
+    al.innerHTML = '<div class="alert alert-ok">✓ Đăng ký thành công! Chuyển sang đăng nhập...</div>';
+    setTimeout(() => { fillDemo(email, password); switchTab('login'); }, 1400);
+  } else {
+    al.innerHTML = `<div class="alert alert-err">${r.data.message || 'Đăng ký thất bại'}</div>`;
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('pane-login').style.display !== 'none') doLogin();
+  else doRegister();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduMS — Quản trị</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div id="toast-container"></div>
+
+<!-- ── User Modal ──────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="um-title">Thêm người dùng</div>
+      <button class="modal-close" onclick="closeModal('user-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="um-alert"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Họ và tên *</label>
+          <input type="text" id="um-name" class="form-control" placeholder="Nguyễn Văn A">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vai trò *</label>
+          <select id="um-role" class="form-control">
+            <option value="student">Sinh viên</option>
+            <option value="teacher">Giảng viên</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email *</label>
+        <input type="email" id="um-email" class="form-control" placeholder="email@example.com">
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Số điện thoại</label><input type="text" id="um-phone" class="form-control" placeholder="0901234567"></div>
+        <div class="form-group"><label class="form-label">Địa chỉ</label><input type="text" id="um-addr" class="form-control" placeholder="TP. HCM"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mật khẩu <span style="color:var(--t3);font-weight:400" id="um-pw-hint">(mặc định: 123456)</span></label>
+        <input type="password" id="um-pw" class="form-control" placeholder="Để trống = mặc định 123456">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('user-modal')">Hủy</button>
+      <button class="btn btn-primary" id="um-save-btn" onclick="saveUser()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Course Modal ─────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="course-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="cm-title">Thêm môn học</div>
+      <button class="modal-close" onclick="closeModal('course-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="cm-alert"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mã môn *</label>
+          <input type="text" id="cm-code" class="form-control" placeholder="CS101" style="text-transform:uppercase">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tín chỉ</label>
+          <input type="number" id="cm-credits" class="form-control" value="3" min="1" max="6">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tên môn học *</label>
+        <input type="text" id="cm-name" class="form-control" placeholder="Lập trình cơ bản">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mô tả</label>
+        <input type="text" id="cm-desc" class="form-control" placeholder="Mô tả ngắn về môn học">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Giảng viên phụ trách</label>
+          <select id="cm-teacher" class="form-control"><option value="">— Chưa phân công —</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sĩ số tối đa</label>
+          <input type="number" id="cm-max" class="form-control" value="40" min="5" max="500">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Học kỳ</label>
+        <input type="text" id="cm-sem" class="form-control" placeholder="2024-1">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('course-modal')">Hủy</button>
+      <button class="btn btn-primary" id="cm-save-btn" onclick="saveCourse()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Enroll Modal ─────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="enroll-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Thêm đăng ký môn học</div>
+      <button class="modal-close" onclick="closeModal('enroll-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="enroll-alert"></div>
+      <div class="form-group">
+        <label class="form-label">Sinh viên *</label>
+        <select id="en-student" class="form-control"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Môn học *</label>
+        <select id="en-course" class="form-control"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('enroll-modal')">Hủy</button>
+      <button class="btn btn-primary" id="en-save-btn" onclick="doEnroll()">Đăng ký</button>
+    </div>
+  </div>
+</div>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">🎓</div>
+      <div><div class="logo-text">EduMS</div><div class="logo-sub">Admin Panel</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div>
+        <div class="nav-sec-lbl">Tổng quan</div>
+        <div class="nav-group">
+          <button class="nav-item active" id="nav-dash" onclick="show('dash')"><span class="ni">📊</span>Bảng điều khiển</button>
+        </div>
+      </div>
+      <div>
+        <div class="nav-sec-lbl">Quản lý người dùng</div>
+        <div class="nav-group">
+          <button class="nav-item" id="nav-students"    onclick="show('students')"><span class="ni">🎓</span>Sinh viên</button>
+          <button class="nav-item" id="nav-teachers"    onclick="show('teachers')"><span class="ni">👨‍🏫</span>Giảng viên</button>
+        </div>
+      </div>
+      <div>
+        <div class="nav-sec-lbl">Quản lý học vụ</div>
+        <div class="nav-group">
+          <button class="nav-item" id="nav-courses"     onclick="show('courses')"><span class="ni">📚</span>Môn học</button>
+          <button class="nav-item" id="nav-enrollments" onclick="show('enrollments')"><span class="ni">📋</span>Đăng ký môn học</button>
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-av" id="sidebar-avatar">A</div>
+        <div class="user-meta">
+          <div class="user-nm" id="sidebar-user-name">Admin</div>
+          <div class="user-rl" id="sidebar-user-role">Quản trị viên</div>
+        </div>
+        <button class="btn-logout" onclick="logout()">⎋</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- ── DASHBOARD ──────────────────────────────────────────────────── -->
+    <div id="sec-dash" class="section-page">
+      <div class="topbar">
+        <div class="topbar-left"><div class="topbar-title">Bảng điều khiển</div><div class="topbar-sub">Tổng quan toàn hệ thống</div></div>
+      </div>
+      <div class="page-body">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-ico si-i">🎓</div><div class="stat-num" id="ds-sv">—</div><div class="stat-lbl">Sinh viên</div></div>
+          <div class="stat-card"><div class="stat-ico si-a">👨‍🏫</div><div class="stat-num" id="ds-gv">—</div><div class="stat-lbl">Giảng viên</div></div>
+          <div class="stat-card"><div class="stat-ico si-t">📚</div><div class="stat-num" id="ds-mh">—</div><div class="stat-lbl">Môn học</div></div>
+          <div class="stat-card"><div class="stat-ico si-r">📋</div><div class="stat-num" id="ds-dk">—</div><div class="stat-lbl">Lượt đăng ký</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Sinh viên mới nhất</div><button class="btn btn-ghost btn-sm" onclick="show('students')">Xem tất cả</button></div>
+            <div id="dash-students-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Môn học</div><button class="btn btn-ghost btn-sm" onclick="show('courses')">Xem tất cả</button></div>
+            <div id="dash-courses-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STUDENTS ───────────────────────────────────────────────────── -->
+    <div id="sec-students" style="display:none" class="section-page">
+      <div class="topbar">
+        <div class="topbar-left"><div class="topbar-title">Quản lý Sinh viên</div><div class="topbar-sub" id="sv-count"></div></div>
+        <button class="btn btn-primary" onclick="openUserModal(null,'student')">+ Thêm sinh viên</button>
+      </div>
+      <div class="page-body">
+        <div class="toolbar">
+          <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" placeholder="Tìm họ tên, email..." oninput="filterTb(this,'sv-tb')"></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Họ tên</th><th>Email</th><th>SĐT</th><th>Địa chỉ</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead>
+              <tbody id="sv-tb"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TEACHERS ───────────────────────────────────────────────────── -->
+    <div id="sec-teachers" style="display:none" class="section-page">
+      <div class="topbar">
+        <div class="topbar-left"><div class="topbar-title">Quản lý Giảng viên</div><div class="topbar-sub" id="gv-count"></div></div>
+        <button class="btn btn-primary" onclick="openUserModal(null,'teacher')">+ Thêm giảng viên</button>
+      </div>
+      <div class="page-body">
+        <div class="toolbar">
+          <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" placeholder="Tìm họ tên, email..." oninput="filterTb(this,'gv-tb')"></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Họ tên</th><th>Email</th><th>SĐT</th><th>Địa chỉ</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead>
+              <tbody id="gv-tb"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COURSES ────────────────────────────────────────────────────── -->
+    <div id="sec-courses" style="display:none" class="section-page">
+      <div class="topbar">
+        <div class="topbar-left"><div class="topbar-title">Quản lý Môn học</div><div class="topbar-sub" id="mh-count"></div></div>
+        <button class="btn btn-primary" onclick="openCourseModal(null)">+ Thêm môn học</button>
+      </div>
+      <div class="page-body">
+        <div class="toolbar">
+          <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" placeholder="Tìm mã môn, tên môn, giảng viên..." oninput="filterTb(this,'mh-tb')"></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Mã môn</th><th>Tên môn học</th><th>Giảng viên</th><th>TC</th><th>Sĩ số</th><th>Học kỳ</th><th>Thao tác</th></tr></thead>
+              <tbody id="mh-tb"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ENROLLMENTS ────────────────────────────────────────────────── -->
+    <div id="sec-enrollments" style="display:none" class="section-page">
+      <div class="topbar">
+        <div class="topbar-left"><div class="topbar-title">Quản lý Đăng ký môn học</div><div class="topbar-sub" id="dk-count"></div></div>
+        <button class="btn btn-primary" onclick="openEnrollModal()">+ Thêm đăng ký</button>
+      </div>
+      <div class="page-body">
+        <div class="toolbar">
+          <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" placeholder="Tìm sinh viên, môn học..." oninput="filterTb(this,'dk-tb')"></div>
+          <select id="dk-status-filter" class="form-control" style="max-width:160px" onchange="filterEnrollByStatus()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="active">Đang học</option>
+            <option value="dropped">Đã hủy</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Sinh viên</th><th>Môn học</th><th>Mã môn</th><th>Ngày đăng ký</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+              <tbody id="dk-tb"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+// ── State ─────────────────────────────────────────────────────────────
+let editUid     = null;
+let editCid     = null;
+let allTeachers = [];
+let allStudents = [];
+let allCourses  = [];
+let allEnrolls  = [];
+
+// ── Init ──────────────────────────────────────────────────────────────
+async function initPage() {
+  const auth = await checkAuth();
+  if (!auth || currentUser.role !== 'admin') { window.location.href = '../index.html'; return; }
+  loadUserUI();
+  await loadDash();
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  Helper: avatar cell
+// ─────────────────────────────────────────────────────────────────────
+function avCell(name) {
+  return `<div style="display:flex;align-items:center;gap:10px">
+    <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--indigo),var(--teal));border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0">${name.charAt(0).toUpperCase()}</div>
+    <strong>${name}</strong>
+  </div>`;
+}
+
+function codeCell(code) {
+  return `<code style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--indigo)">${code}</code>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  DASHBOARD
+// ─────────────────────────────────────────────────────────────────────
+async function loadDash() {
+  const [sR, svR, cR] = await Promise.all([get('/stats'), get('/users?role=student'), get('/courses')]);
+  if (!sR.ok) return;
+  const s = sR.data;
+  document.getElementById('ds-sv').textContent = s.students;
+  document.getElementById('ds-gv').textContent = s.teachers;
+  document.getElementById('ds-mh').textContent = s.courses;
+  document.getElementById('ds-dk').textContent = s.enrollments;
+
+  const students = (svR.data || []).slice(0, 6);
+  document.getElementById('dash-students-list').innerHTML = students.map(u => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--indigo),var(--teal));border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0">${u.full_name.charAt(0).toUpperCase()}</div>
+      <div style="min-width:0">
+        <div style="font-size:13.5px;font-weight:600;color:var(--t1)">${u.full_name}</div>
+        <div style="font-size:11.5px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.email}</div>
+      </div>
+    </div>`).join('') || '<div style="color:var(--t3);padding:20px;text-align:center;font-size:13px">Chưa có sinh viên</div>';
+
+  const courses = (cR.data || []).slice(0, 6);
+  document.getElementById('dash-courses-list').innerHTML = courses.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div>
+        ${codeCell(c.code)}
+        <div style="font-size:13.5px;font-weight:600;margin-top:2px">${c.name}</div>
+      </div>
+      <span class="badge ${c.enrolled_count >= c.max_students ? 'br' : 'bi'}">${c.enrolled_count}/${c.max_students}</span>
+    </div>`).join('') || '<div style="color:var(--t3);padding:20px;text-align:center;font-size:13px">Chưa có môn học</div>';
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  USERS
+// ─────────────────────────────────────────────────────────────────────
+async function loadUsers(role) {
+  const r = await get('/users?role=' + role);
+  if (!r.ok) { toast('Lỗi tải danh sách', 'err'); return; }
+  const users = r.data || [];
+
+  if (role === 'student') { allStudents = users; document.getElementById('sv-count').textContent = users.length + ' sinh viên'; }
+  if (role === 'teacher') { allTeachers = users; document.getElementById('gv-count').textContent = users.length + ' giảng viên'; }
+
+  const tbId = role === 'student' ? 'sv-tb' : 'gv-tb';
+  const tb   = document.getElementById(tbId);
+  if (!users.length) {
+    tb.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--t3)">Chưa có ${role === 'student' ? 'sinh viên' : 'giảng viên'} nào</td></tr>`;
+    return;
+  }
+  tb.innerHTML = users.map(u => `
+    <tr>
+      <td>${avCell(u.full_name)}</td>
+      <td style="color:var(--t2)">${u.email}</td>
+      <td style="color:var(--t2)">${u.phone || '—'}</td>
+      <td style="color:var(--t2)">${u.address || '—'}</td>
+      <td style="color:var(--t3);font-size:12px;font-family:'JetBrains Mono',monospace">${(u.created_at || '').split(' ')[0] || '—'}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" style="margin-right:6px"
+          onclick='openUserModal(${JSON.stringify(u)})'>Sửa</button>
+        <button class="btn btn-danger btn-sm"
+          onclick="delUser(${u.id}, '${role}', '${u.full_name.replace(/'/g, "\\'")}')">Xóa</button>
+      </td>
+    </tr>`).join('');
+}
+
+function openUserModal(user, defRole) {
+  editUid = user ? user.id : null;
+  document.getElementById('um-title').textContent = user ? 'Sửa thông tin người dùng' : 'Thêm người dùng';
+  document.getElementById('um-name').value  = user?.full_name || '';
+  document.getElementById('um-email').value = user?.email    || '';
+  document.getElementById('um-phone').value = user?.phone    || '';
+  document.getElementById('um-addr').value  = user?.address  || '';
+  document.getElementById('um-pw').value    = '';
+  document.getElementById('um-role').value  = user?.role || defRole || 'student';
+  document.getElementById('um-pw-hint').textContent = user ? '(để trống = không đổi)' : '(mặc định: 123456)';
+  document.getElementById('um-alert').innerHTML = '';
+  openModal('user-modal');
+}
+
+async function saveUser() {
+  const btn = document.getElementById('um-save-btn');
+  btn.disabled = true; btn.textContent = 'Đang lưu...';
+
+  const data = {
+    full_name: document.getElementById('um-name').value.trim(),
+    email:     document.getElementById('um-email').value.trim(),
+    role:      document.getElementById('um-role').value,
+    phone:     document.getElementById('um-phone').value.trim() || undefined,
+    address:   document.getElementById('um-addr').value.trim() || undefined,
+    password:  document.getElementById('um-pw').value || undefined,
+  };
+
+  const r = editUid
+    ? await put('/users/' + editUid, data)
+    : await post('/users', data);
+
+  btn.disabled = false; btn.textContent = 'Lưu';
+
+  if (r.ok) {
+    toast(editUid ? 'Đã cập nhật!' : 'Đã thêm người dùng!', 'ok');
+    closeModal('user-modal');
+    await loadUsers(data.role);
+  } else {
+    document.getElementById('um-alert').innerHTML = `<div class="alert alert-err">${r.data.message || 'Lỗi lưu thông tin'}</div>`;
+  }
+}
+
+async function delUser(id, role, name) {
+  if (!confirm(`Xác nhận xóa "${name}"?\n\nCảnh báo: Tất cả đăng ký và điểm của người dùng này cũng sẽ bị xóa.`)) return;
+  const r = await del('/users/' + id);
+  if (r.ok) { toast('Đã xóa!', 'ok'); await loadUsers(role); }
+  else toast(r.data.message || 'Lỗi xóa', 'err');
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  COURSES
+// ─────────────────────────────────────────────────────────────────────
+async function loadCourses() {
+  const [cR, tR] = await Promise.all([get('/courses'), get('/users?role=teacher')]);
+  if (!cR.ok) { toast('Lỗi tải môn học', 'err'); return; }
+  allCourses  = cR.data  || [];
+  allTeachers = tR.data  || [];
+  document.getElementById('mh-count').textContent = allCourses.length + ' môn học';
+
+  const tb = document.getElementById('mh-tb');
+  if (!allCourses.length) {
+    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--t3)">Chưa có môn học nào</td></tr>';
+    return;
+  }
+  tb.innerHTML = allCourses.map(c => `
+    <tr>
+      <td>${codeCell(c.code)}</td>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.teacher_name || '<span style="color:var(--t3)">Chưa phân công</span>'}</td>
+      <td><span class="badge bi">${c.credits}</span></td>
+      <td>
+        <span class="badge ${c.enrolled_count >= c.max_students ? 'br' : 'bt'}">${c.enrolled_count}/${c.max_students}</span>
+      </td>
+      <td>${c.semester || '—'}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" style="margin-right:6px"
+          onclick='openCourseModal(${JSON.stringify(c)})'>Sửa</button>
+        <button class="btn btn-danger btn-sm"
+          onclick="delCourse(${c.id}, '${c.name.replace(/'/g, "\\'")}')">Xóa</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function openCourseModal(c) {
+  editCid = c?.id || null;
+  document.getElementById('cm-title').textContent = c ? 'Sửa môn học' : 'Thêm môn học';
+  document.getElementById('cm-code').value    = c?.code        || '';
+  document.getElementById('cm-name').value    = c?.name        || '';
+  document.getElementById('cm-desc').value    = c?.description || '';
+  document.getElementById('cm-credits').value = c?.credits     || 3;
+  document.getElementById('cm-max').value     = c?.max_students || 40;
+  document.getElementById('cm-sem').value     = c?.semester    || '';
+  document.getElementById('cm-alert').innerHTML = '';
+
+  // Disable code if editing
+  document.getElementById('cm-code').disabled = !!c;
+
+  // Load teachers if not cached
+  if (!allTeachers.length) { const r = await get('/users?role=teacher'); allTeachers = r.data || []; }
+  document.getElementById('cm-teacher').innerHTML =
+    '<option value="">— Chưa phân công —</option>' +
+    allTeachers.map(t => `<option value="${t.id}" ${c?.teacher_id === t.id ? 'selected' : ''}>${t.full_name}</option>`).join('');
+
+  openModal('course-modal');
+}
+
+async function saveCourse() {
+  const btn = document.getElementById('cm-save-btn');
+  btn.disabled = true; btn.textContent = 'Đang lưu...';
+
+  const data = {
+    code:        document.getElementById('cm-code').value.trim().toUpperCase(),
+    name:        document.getElementById('cm-name').value.trim(),
+    description: document.getElementById('cm-desc').value.trim() || undefined,
+    credits:     parseInt(document.getElementById('cm-credits').value) || 3,
+    max_students: parseInt(document.getElementById('cm-max').value) || 40,
+    teacher_id:  document.getElementById('cm-teacher').value || undefined,
+    semester:    document.getElementById('cm-sem').value.trim() || undefined,
+  };
+
+  const r = editCid
+    ? await put('/courses/' + editCid, data)
+    : await post('/courses', data);
+
+  btn.disabled = false; btn.textContent = 'Lưu';
+
+  if (r.ok) {
+    toast(editCid ? 'Đã cập nhật môn học!' : 'Đã thêm môn học!', 'ok');
+    closeModal('course-modal');
+    await loadCourses();
+  } else {
+    document.getElementById('cm-alert').innerHTML = `<div class="alert alert-err">${r.data.message || 'Lỗi lưu môn học'}</div>`;
+  }
+}
+
+async function delCourse(id, name) {
+  if (!confirm(`Xác nhận xóa môn học "${name}"?\n\nTất cả đăng ký và điểm liên quan cũng sẽ bị xóa.`)) return;
+  const r = await del('/courses/' + id);
+  if (r.ok) { toast('Đã xóa môn học!', 'ok'); await loadCourses(); }
+  else toast(r.data.message || 'Lỗi xóa', 'err');
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  ENROLLMENTS
+// ─────────────────────────────────────────────────────────────────────
+async function loadEnrollments() {
+  const r = await get('/enrollments/all');
+  if (!r.ok) { toast('Lỗi tải danh sách đăng ký', 'err'); return; }
+  allEnrolls = r.data || [];
+  document.getElementById('dk-count').textContent = allEnrolls.length + ' lượt đăng ký';
+  renderEnrollTable(allEnrolls);
+}
+
+function renderEnrollTable(list) {
+  const tb = document.getElementById('dk-tb');
+  if (!list.length) {
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--t3)">Không có dữ liệu</td></tr>';
+    return;
+  }
+  tb.innerHTML = list.map(e => `
+    <tr>
+      <td><strong>${e.student_name}</strong></td>
+      <td>${e.course_name}</td>
+      <td>${codeCell(e.code)}</td>
+      <td style="color:var(--t3);font-size:12px;font-family:'JetBrains Mono',monospace">${(e.enrolled_at || '').split(' ')[0] || '—'}</td>
+      <td><span class="badge ${e.status === 'active' ? 'bt' : 'br'}">${e.status === 'active' ? 'Đang học' : 'Đã hủy'}</span></td>
+      <td>
+        ${e.status === 'active'
+          ? `<button class="btn btn-danger btn-sm" onclick="dropEnroll(${e.id})">Hủy đăng ký</button>`
+          : '—'}
+      </td>
+    </tr>`).join('');
+}
+
+function filterEnrollByStatus() {
+  const status = document.getElementById('dk-status-filter').value;
+  const filtered = status ? allEnrolls.filter(e => e.status === status) : allEnrolls;
+  renderEnrollTable(filtered);
+}
+
+async function openEnrollModal() {
+  document.getElementById('enroll-alert').innerHTML = '';
+  if (!allStudents.length) { const r = await get('/users?role=student'); allStudents = r.data || []; }
+  if (!allCourses.length)  { const r = await get('/courses');            allCourses  = r.data || []; }
+
+  document.getElementById('en-student').innerHTML =
+    allStudents.map(s => `<option value="${s.id}">${s.full_name} — ${s.email}</option>`).join('') ||
+    '<option value="">Không có sinh viên</option>';
+
+  document.getElementById('en-course').innerHTML =
+    allCourses.map(c => `<option value="${c.id}">${c.name} (${c.code}) — còn ${c.max_students - c.enrolled_count} chỗ</option>`).join('') ||
+    '<option value="">Không có môn học</option>';
+
+  openModal('enroll-modal');
+}
+
+async function doEnroll() {
+  const btn = document.getElementById('en-save-btn');
+  btn.disabled = true; btn.textContent = 'Đang xử lý...';
+
+  const student_id = parseInt(document.getElementById('en-student').value);
+  const course_id  = parseInt(document.getElementById('en-course').value);
+
+  if (!student_id || !course_id) {
+    document.getElementById('enroll-alert').innerHTML = '<div class="alert alert-err">Vui lòng chọn sinh viên và môn học</div>';
+    btn.disabled = false; btn.textContent = 'Đăng ký';
+    return;
+  }
+
+  const r = await post('/enroll', { course_id, student_id_override: student_id });
+  btn.disabled = false; btn.textContent = 'Đăng ký';
+
+  if (r.ok) {
+    toast('Đăng ký thành công!', 'ok');
+    closeModal('enroll-modal');
+    await loadEnrollments();
+    // Refresh course capacity
+    const cIdx = allCourses.findIndex(c => c.id === course_id);
+    if (cIdx >= 0) allCourses[cIdx].enrolled_count++;
+  } else {
+    document.getElementById('enroll-alert').innerHTML = `<div class="alert alert-err">${r.data.message || 'Lỗi đăng ký'}</div>`;
+  }
+}
+
+async function dropEnroll(id) {
+  if (!confirm('Xác nhận hủy đăng ký này?')) return;
+  const r = await del('/enrollments/' + id);
+  if (r.ok) { toast('Đã hủy đăng ký!', 'ok'); await loadEnrollments(); }
+  else toast(r.data.message || 'Lỗi hủy', 'err');
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  Search filter
+// ─────────────────────────────────────────────────────────────────────
+function filterTb(inp, tbId) {
+  const q = inp.value.toLowerCase();
+  document.querySelectorAll('#' + tbId + ' tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  Section router
+// ─────────────────────────────────────────────────────────────────────
+function show(name) {
+  ['dash','students','teachers','courses','enrollments'].forEach(s => {
+    document.getElementById('sec-' + s).style.display = s === name ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('nav-' + name).classList.add('active');
+
+  if      (name === 'students')    loadUsers('student');
+  else if (name === 'teachers')    loadUsers('teacher');
+  else if (name === 'courses')     loadCourses();
+  else if (name === 'enrollments') loadEnrollments();
+  else                              loadDash();
+}
+
+initPage();
+</script>
+</body>
+</html>

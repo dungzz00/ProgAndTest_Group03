@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>EduMS — Sinh viên</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+/* ── Extra styles for student page ── */
+.enrolled-badge { display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--teal-bg);color:var(--teal);border:1px solid rgba(45,212,191,0.2) }
+.course-semester { display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:var(--surface2);color:var(--t3) }
+.grade-row-highlight { background:rgba(108,126,248,0.04) }
+.progress-ring { position:relative;display:inline-flex;align-items:center;justify-content:center }
+.gpa-bar-wrap { background:var(--surface);border-radius:8px;height:6px;overflow:hidden;margin-top:10px }
+.gpa-bar-fill { height:100%;border-radius:8px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1) }
+.subject-icon { width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0 }
+.empty-art { font-size:56px;margin-bottom:16px;opacity:0.25;display:block }
+.course-tag { display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;margin-right:4px;margin-bottom:4px }
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div class="app-shell">
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">🎓</div>
+      <div><div class="logo-text">EduMS</div><div class="logo-sub">Student Portal</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div>
+        <div class="nav-sec-lbl">Overview</div>
+        <div class="nav-group">
+          <button class="nav-item active" id="nav-dash"     onclick="show('dash')"><span class="ni">📊</span>Dashboard</button>
+        </div>
+      </div>
+      <div>
+        <div class="nav-sec-lbl">Academic</div>
+        <div class="nav-group">
+          <button class="nav-item" id="nav-courses"  onclick="show('courses')"><span class="ni">📚</span>Course Registration</button>
+          <button class="nav-item" id="nav-enrolled" onclick="show('enrolled')"><span class="ni">📋</span>Enrolled Courses</button>
+          <button class="nav-item" id="nav-grades"   onclick="show('grades')"><span class="ni">🏆</span>Grades</button>
+        </div>
+      </div>
+      <div>
+        <div class="nav-sec-lbl">Account</div>
+        <div class="nav-group">
+          <button class="nav-item" id="nav-profile"  onclick="show('profile')"><span class="ni">👤</span>Personal Profile</button>
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-av" id="sidebar-avatar">?</div>
+        <div class="user-meta">
+          <div class="user-nm" id="sidebar-user-name">...</div>
+          <div class="user-rl" id="sidebar-user-role">Student</div>
+        </div>
+        <button class="btn-logout" onclick="logout()" title="Đăng xuất">⎋</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- ════════════ DASHBOARD ════════════ -->
+    <div id="sec-dash" class="section-page">
+      <div class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title">Dashboard</div>
+          <div class="topbar-sub">Hi, <span id="welcome-name" style="color:var(--indigo);font-weight:600"></span>! 👋</div>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="stat-grid">
+          <div class="stat-card" style="cursor:pointer" onclick="show('enrolled')">
+            <div class="stat-ico si-i">📚</div>
+            <div class="stat-num" id="s-enrolled">—</div>
+            <div class="stat-lbl">Current Courses</div>
+          </div>
+          <div class="stat-card" style="cursor:pointer" onclick="show('grades')">
+            <div class="stat-ico si-t">🏆</div>
+            <div class="stat-num" id="s-gpa">—</div>
+            <div class="stat-lbl">Current GPA</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-ico si-a">✅</div>
+            <div class="stat-num" id="s-graded">—</div>
+            <div class="stat-lbl">Graded Courses</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-ico si-r">⏳</div>
+            <div class="stat-num" id="s-pending">—</div>
+            <div class="stat-lbl">Pending Grades</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 340px;gap:16px">
+          <!-- Recent grades table -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Recent Grades</div>
+              <button class="btn btn-ghost btn-sm" onclick="show('grades')">View all →</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Course</th><th>Course Code</th><th>Credits</th><th>Grade</th><th>Classification</th></tr></thead>
+                <tbody id="dash-grades-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- GPA breakdown panel -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">Academic Performance Analysis</div></div>
+            <div style="text-align:center;padding:12px 0 20px">
+              <div id="gpa-display" style="font-size:52px;font-weight:700;font-family:'JetBrains Mono',monospace;background:linear-gradient(135deg,var(--indigo),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1">0.00</div>
+              <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-top:6px">Cumulative GPA</div>
+              <div id="rank-badge" style="margin-top:12px;font-size:15px;font-weight:700">—</div>
+            </div>
+            <div id="grade-dist" style="display:flex;flex-direction:column;gap:8px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ COURSES ════════════ -->
+    <div id="sec-courses" style="display:none" class="section-page">
+      <div class="topbar">
+        <div class="topbar-left"><div class="topbar-title">Course Registration</div><div class="topbar-sub">Select courses you want to enroll in this semester</div></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="badge bi" id="course-count-badge"></span>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="toolbar">
+          <div class="search-wrap" style="max-width:340px">
+            <span class="search-ico">🔍</span>
+            <input type="text" id="course-search" placeholder="Tìm tên môn, mã môn, giảng viên..." oninput="filterCourses(this.value)">
+          </div>
+          <select id="sem-filter" class="form-control" style="max-width:150px" onchange="filterCourses(document.getElementById('course-search').value)">
+            <option value="">All Semesters</option>
+          </select>
+        </div>
+        <div class="course-grid" id="course-grid">
+          <div class="loader"><div class="spin"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ ENROLLED ════════════ -->
+    <div id="sec-enrolled" style="display:none" class="section-page">
+      <div class="topbar">
+        <div class="topbar-left"><div class="topbar-title">Enrolled Courses</div><div class="topbar-sub">List of currently enrolled courses</div></div>
+        <button class="btn btn-primary btn-sm" onclick="show('courses')">+ Enroll more</button>
+      </div>
+      <div class="page-body">
+        <div id="enrolled-cards" style="display:flex;flex-direction:column;gap:12px"></div>
+      </div>
+    </div>
+
+    <!-- ════════════ GRADES ════════════ -->
+    <div id="sec-grades" style="display:none" class="section-page">
+      <div class="topbar">
+        <div class="topbar-left"><div class="topbar-title">Grades</div><div class="topbar-sub">Grade Summary</div></div>
+      </div>
+      <div class="page-body">
+        <div class="gpa-hero">
+          <div style="flex-shrink:0">
+            <div class="gpa-num" id="gpa-big">0.00</div>
+            <div class="gpa-lbl">Cumulative GPA</div>
+          </div>
+          <div style="flex:1;padding:0 24px">
+            <div class="gpa-rank" id="gpa-rank">—</div>
+            <div style="font-size:13px;color:var(--t2);margin-top:4px;margin-bottom:10px">Current Academic Standing</div>
+            <div class="gpa-bar-wrap"><div id="gpa-bar" class="gpa-bar-fill" style="width:0%;background:linear-gradient(90deg,var(--indigo),var(--teal))"></div></div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:28px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--teal)" id="total-credits">0</div>
+            <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-top:2px">graded credits</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Grade Details by Course</div>
+            <div id="grade-summary-badges" style="display:flex;gap:6px"></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Course</th><th>Course Code</th><th>Credits</th>
+                  <th style="text-align:center">Grade</th>
+                  <th style="text-align:center">Classification</th>
+                </tr>
+              </thead>
+              <tbody id="grades-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ PROFILE ════════════ -->
+    <div id="sec-profile" style="display:none" class="section-page">
+      <div class="topbar"><div class="topbar-left"><div class="topbar-title">Personal Profile</div></div></div>
+      <div class="page-body">
+        <div style="display:grid;grid-template-columns:300px 1fr;gap:20px;max-width:860px">
+          <!-- Avatar card -->
+          <div class="card" style="text-align:center;padding:32px 20px">
+            <div id="profile-big-av" style="width:80px;height:80px;background:linear-gradient(135deg,var(--indigo),var(--teal));border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700;margin:0 auto 16px;color:#fff">?</div>
+            <div style="font-size:17px;font-weight:700;margin-bottom:4px" id="profile-display-name">...</div>
+            <div style="font-size:12px;color:var(--t3);margin-bottom:16px">Student</div>
+            <div style="font-size:12px;color:var(--t2)" id="profile-email-show"></div>
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+              <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Statistics</div>
+              <div style="display:flex;justify-content:space-around">
+                <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--indigo)" id="pstat-enrolled">—</div><div style="font-size:11px;color:var(--t3)">Course</div></div>
+                <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--teal)" id="pstat-gpa">—</div><div style="font-size:11px;color:var(--t3)">GPA</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form card -->
+          <div class="card">
+            <div id="profile-alert"></div>
+            <div style="font-size:15px;font-weight:700;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">Personal Information</div>
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" id="p-name" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email <span style="color:var(--t3);font-weight:400">(cannot be changed)</span></label>
+              <input type="email" id="p-email" class="form-control" disabled style="opacity:0.5">
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Phone Number</label><input type="text" id="p-phone" class="form-control" placeholder="0901234567"></div>
+              <div class="form-group"><label class="form-label">Address</label><input type="text" id="p-addr" class="form-control" placeholder="TP. Hồ Chí Minh"></div>
+            </div>
+            <div style="font-size:15px;font-weight:700;margin:20px 0 14px;padding-top:16px;border-top:1px solid var(--border)">Change Password</div>
+            <div class="form-group" style="margin-bottom:20px">
+              <label class="form-label">New Password <span style="color:var(--t3);font-weight:400">(leave blank if unchanged)</span></label>
+              <input type="password" id="p-pw" class="form-control" placeholder="Minimum 6 characters">
+            </div>
+            <button class="btn btn-primary" id="save-profile-btn" onclick="saveProfile()">💾 Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+let allCourses = [], myEnrollments = [], myGrades = [];
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+async function initPage() {
+  const auth = await checkAuth();
+  if (!auth || currentUser.role !== 'student') { window.location.href = '../index.html'; return; }
+  loadUserUI();
+  document.getElementById('welcome-name').textContent = currentUser.full_name.split(' ').pop();
+  await loadDash();
+  loadProfile();
+}
+
+// ─── DASHBOARD ───────────────────────────────────────────────────────────────
+async function loadDash() {
+  const [eR, gR] = await Promise.all([get('/enrollments'), get('/grades')]);
+  myEnrollments = eR.ok ? (eR.data || []) : [];
+  myGrades      = gR.ok ? (gR.data || []) : [];
+
+  const graded  = myGrades.filter(g => g.grade !== null && g.grade !== undefined);
+  const pending = myEnrollments.length - graded.length;
+  const gpa     = calcGPA(myGrades);
+
+  document.getElementById('s-enrolled').textContent = myEnrollments.length;
+  document.getElementById('s-graded').textContent   = graded.length;
+  document.getElementById('s-pending').textContent  = Math.max(0, pending);
+  document.getElementById('s-gpa').textContent      = gpa;
+  document.getElementById('gpa-display').textContent = gpa;
+
+  const gpaF = parseFloat(gpa);
+  const rank = gpaF >= 8.5 ? '🏅 Excellent (A)' : gpaF >= 8.0 ? '🌟 Very Good (B+)' : gpaF >= 7.0 ? '⭐ Good (B)' : gpaF >= 6.5 ? '👍 Fairly Good (C+)' : gpaF >= 5.5 ? '✅ Average (C)' : gpaF >= 5.0 ? '⚠️ Below Average (D+)' : gpaF >= 4.0 ? '❗ Weak (D)' : gpaF > 0 ? '❌ Poor (F)' : '—';
+  document.getElementById('rank-badge').textContent = rank;
+
+  // Grade distribution
+const dist = { A:0, 'B+':0, B:0, 'C+':0, C:0, 'D+':0, D:0, F:0 };
+graded.forEach(g => { const l = g.letter_grade; if (l) dist[l] = (dist[l]||0)+1; });
+const distEl = document.getElementById('grade-dist');
+const colors = { 
+  A:'var(--teal)', 
+  'B+':'var(--indigo)', B:'var(--indigo)', 
+  'C+':'var(--amber)', C:'var(--amber)', 
+  'D+':'var(--rose)', D:'var(--rose)', 
+  F:'var(--rose)' 
+};
+const labels = { 
+  A:'Excellent (8.5–10)', 
+  'B+':'Very Good (8.0–8.4)', 
+  B:'Good (7.0–7.9)', 
+  'C+':'Fairly Good (6.5–6.9)', 
+  C:'Average (5.5–6.4)', 
+  'D+':'Below Average (5.0–5.4)', 
+  D:'Weak (4.0–4.9)', 
+  F:'Poor (<4.0)' 
+};
+distEl.innerHTML = Object.entries(dist).map(([l, cnt]) => {
+  const pct = graded.length ? Math.round(cnt/graded.length*100) : 0;
+  return `<div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+      <span style="color:${colors[l]};font-weight:600">Loại ${l} — ${labels[l]}</span>
+      <span style="color:var(--t3)">${cnt} môn</span>
+    </div>
+    <div style="background:var(--surface);border-radius:4px;height:5px;overflow:hidden">
+      <div style="width:${pct}%;height:100%;background:${colors[l]};border-radius:4px;transition:width 0.7s ease"></div>
+    </div>
+  </div>`;
+}).join('');
+
+// Recent grades table
+const tb = document.getElementById('dash-grades-body');
+if (!myGrades.length) {
+  tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:36px;color:var(--t3)">Chưa có điểm nào</td></tr>';
+  return;
+}
+tb.innerHTML = myGrades.slice(0, 5).map(g => `
+  <tr>
+    <td><strong>${g.course_name}</strong></td>
+    <td><code style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--indigo)">${g.code}</code></td>
+    <td style="color:var(--t3)">${g.credits}</td>
+    <td class="${gradeClass(g.grade)}" style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700">${g.grade ?? '—'}</td>
+    <td>${gradeLabel(g.letter_grade)}</td>
+  </tr>`).join('');
+}
+
+// ─── COURSES ─────────────────────────────────────────────────────────────────
+async function loadCourses() {
+  document.getElementById('course-grid').innerHTML = '<div class="loader"><div class="spin"></div></div>';
+  const [cR, eR] = await Promise.all([get('/courses'), get('/enrollments')]);
+  if (!cR.ok) { toast('Error loading course list. Check if the server is running.', 'err'); return; }
+  allCourses    = cR.data || [];
+  myEnrollments = eR.ok ? (eR.data || []) : [];
+
+  // Populate semester filter
+  const sems = [...new Set(allCourses.map(c => c.semester).filter(Boolean))].sort();
+  const selEl = document.getElementById('sem-filter');
+  selEl.innerHTML = '<option value="">All Semesters</option>' +
+    sems.map(s => `<option value="${s}">${s}</option>`).join('');
+
+  document.getElementById('course-count-badge').textContent = allCourses.length + ' Course';
+  renderCourses(allCourses);
+}
+
+function renderCourses(list) {
+  const enrolledIds = new Set(myEnrollments.map(e => e.course_id));
+  const el = document.getElementById('course-grid');
+  if (!list.length) {
+    el.innerHTML = '<div style="grid-column:1/-1"><div class="empty"><span class="empty-art">📚</span><p>No suitable courses found</p></div></div>';
+    return;
+  }
+  el.innerHTML = list.map(c => {
+    const isEnrolled = enrolledIds.has(c.id);
+    const isFull     = c.enrolled_count >= c.max_students;
+    const pct        = c.max_students > 0 ? Math.round(c.enrolled_count / c.max_students * 100) : 0;
+    const icons      = { CS: '💻', MATH: '📐', ENG: '🌐', PHY: '⚡', CHE: '🧪' };
+    const ico        = Object.entries(icons).find(([k]) => c.code.startsWith(k))?.[1] || '📖';
+    return `<div class="c-card">
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
+        <div class="subject-icon si-i">${ico}</div>
+        <div style="flex:1;min-width:0">
+          <div class="c-code">${c.code}</div>
+          <div class="c-name" style="margin-top:2px">${c.name}</div>
+        </div>
+        <span class="badge ${c.credits >= 4 ? 'ba' : 'bi'}">${c.credits} TC</span>
+      </div>
+      <div class="c-desc">${c.description || 'No description available'}</div>
+      <div class="c-meta">
+        <div class="c-mi">👨‍🏫 ${c.teacher_name || 'Not assigned yet'}</div>
+        ${c.semester ? `<div class="c-mi">📅 ${c.semester}</div>` : ''}
+      </div>
+      <div class="c-footer">
+        <div style="flex:1">
+          <div style="font-size:11px;color:${pct >= 90 ? 'var(--rose)' : 'var(--t3)'};margin-bottom:4px">${c.enrolled_count}/${c.max_students} Student ${pct >= 90 ? '⚠️' : ''}</div>
+          <div class="cap-bar"><div class="cap-fill" style="width:${pct}%;background:${pct >= 90 ? 'var(--rose)' : 'linear-gradient(90deg,var(--teal),var(--indigo))'}"></div></div>
+        </div>
+        <div style="margin-left:14px">
+          ${isEnrolled
+            ? '<span class="enrolled-badge">✓ Enrolled</span>'
+            : isFull
+              ? '<span class="badge br">Full</span>'
+              : `<button class="btn btn-primary btn-sm" onclick="enrollCourse(${c.id},this)">Enroll</button>`
+          }
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterCourses(q) {
+  const lower  = q.toLowerCase();
+  const semVal = document.getElementById('sem-filter').value;
+  const filtered = allCourses.filter(c => {
+    const matchQ   = !q || c.name.toLowerCase().includes(lower) || c.code.toLowerCase().includes(lower) || (c.teacher_name||'').toLowerCase().includes(lower);
+    const matchSem = !semVal || c.semester === semVal;
+    return matchQ && matchSem;
+  });
+  renderCourses(filtered);
+}
+
+async function enrollCourse(cid, btn) {
+  btn.disabled = true; btn.textContent = '...';
+  const r = await post('/enroll', { course_id: cid });
+  if (r.ok) { toast('Successfully enrolled!', 'ok'); await loadCourses(); await loadDash(); }
+  else { toast(r.data.message || 'Enrollment failed', 'err'); btn.disabled = false; btn.textContent = 'Enroll'; }
+}
+
+// ─── ENROLLED ────────────────────────────────────────────────────────────────
+async function loadEnrolled() {
+  const r = await get('/enrollments');
+  if (!r.ok) { toast('Error loading list', 'err'); return; }
+  const list = r.data || [];
+  const el   = document.getElementById('enrolled-cards');
+
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><span class="empty-art">📋</span><p>No courses enrolled yet</p><button class="btn btn-primary" style="margin-top:16px" onclick="show('courses')">+ Enroll now</button></div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(e => {
+    const hasGrade = e.grade !== null && e.grade !== undefined;
+    const gcls     = hasGrade ? gradeClass(e.grade) : '';
+    const icons    = { CS: '💻', MATH: '📐', ENG: '🌐', PHY: '⚡', CHE: '🧪' };
+    const ico      = Object.entries(icons).find(([k]) => e.code.startsWith(k))?.[1] || '📖';
+    return `<div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="subject-icon si-i" style="width:44px;height:44px;font-size:20px;flex-shrink:0">${ico}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <strong style="font-size:15px">${e.course_name}</strong>
+            <code style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--indigo)">${e.code}</code>
+            ${e.semester ? `<span class="course-semester">${e.semester}</span>` : ''}
+          </div>
+          <div style="display:flex;gap:16px;font-size:12.5px;color:var(--t3)">
+            <span>👨‍🏫 ${e.teacher_name || 'Not assigned yet'}</span>
+            <span>🎯 ${e.credits} Credits</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+          ${hasGrade
+            ? `<div style="text-align:center"><div class="${gcls}" style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace">${e.grade}</div><div style="font-size:11px;color:var(--t3)">Grade</div></div>`
+            : `<div style="text-align:center;padding:6px 14px;background:var(--amber-bg);border-radius:8px;border:1px solid rgba(245,158,11,0.2)"><div style="font-size:11px;font-weight:600;color:var(--amber)">⏳ Pending Grades</div></div>`
+          }
+          ${gradeLabel(e.letter_grade)}
+          <button class="btn btn-danger btn-sm" onclick="dropCourse(${e.id},this)" title="Drop">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function dropCourse(eid, btn) {
+  if (!confirm('Are you sure you want to drop this course?')) return;
+  btn.disabled = true; btn.textContent = '...';
+  const r = await del('/enrollments/' + eid);
+  if (r.ok) { toast('Successfully dropped', 'ok'); await loadEnrolled(); await loadDash(); }
+  else { toast(r.data.message || 'Lỗi', 'err'); btn.disabled = false; btn.textContent = 'Hủy'; }
+}
+
+// ─── GRADES ──────────────────────────────────────────────────────────────────
+async function loadGrades() {
+  const r = await get('/grades');
+  if (!r.ok) { toast('Error loading grades', 'err'); return; }
+  const grades = r.data || [];
+
+  const gpa  = calcGPA(grades);
+  const gpaF = parseFloat(gpa);
+  document.getElementById('gpa-big').textContent  = gpa;
+  document.getElementById('gpa-bar').style.width  = Math.min(100, gpaF / 10 * 100) + '%';
+  const rank = gpaF >= 8.5 ? '🏅 Excellent' : gpaF >= 7 ? '⭐ Very Good' : gpaF >= 5.5 ? '✅ Good' : gpaF > 0 ? '⚠️ Average' : '—';
+  document.getElementById('gpa-rank').textContent = rank;
+
+  const valid = grades.filter(g => g.grade !== null && g.grade !== undefined);
+  const tc    = valid.reduce((s, g) => s + (parseInt(g.credits)||3), 0);
+  document.getElementById('total-credits').textContent = tc;
+
+  // Summary badges
+  const dist = { A:0, B:0, C:0, D:0 };
+  valid.forEach(g => { if (g.letter_grade) dist[g.letter_grade]++; });
+  const colors = { A:'bt', B:'bi', C:'ba', D:'br' };
+  document.getElementById('grade-summary-badges').innerHTML =
+    Object.entries(dist).filter(([,v]) => v > 0)
+      .map(([l, v]) => `<span class="badge ${colors[l]}">Category ${l}: ${v}</span>`).join('');
+
+  const tb = document.getElementById('grades-body');
+  if (!grades.length) {
+    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:48px;color:var(--t3)"><span style="font-size:40px;display:block;margin-bottom:12px;opacity:0.3">🏆</span>No grades yet</td></tr>';
+    return;
+  }
+  tb.innerHTML = grades.map(g => `
+    <tr class="${g.grade !== null ? 'grade-row-highlight' : ''}">
+      <td><strong>${g.course_name}</strong></td>
+      <td><code style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--indigo)">${g.code}</code></td>
+      <td style="color:var(--t3)">${g.credits}</td>
+      <td style="text-align:center">
+        ${g.grade !== null && g.grade !== undefined
+          ? `<span class="${gradeClass(g.grade)}" style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace">${g.grade}</span>`
+          : `<span style="color:var(--t3);font-size:12px">Not available</span>`}
+      </td>
+      <td style="text-align:center">${gradeLabel(g.letter_grade)}</td>
+    </tr>`).join('');
+}
+
+// ─── PROFILE ─────────────────────────────────────────────────────────────────
+async function loadProfile() {
+  const [pR, eR, gR] = await Promise.all([get('/me'), get('/enrollments'), get('/grades')]);
+  if (!pR.ok) return;
+  const u = pR.data.user;
+  document.getElementById('p-name').value   = u.full_name || '';
+  document.getElementById('p-email').value  = u.email    || '';
+  document.getElementById('p-phone').value  = u.phone    || '';
+  document.getElementById('p-addr').value   = u.address  || '';
+  document.getElementById('profile-big-av').textContent           = u.full_name.charAt(0).toUpperCase();
+  document.getElementById('profile-display-name').textContent     = u.full_name;
+  document.getElementById('profile-email-show').textContent       = u.email;
+  document.getElementById('pstat-enrolled').textContent = (eR.data||[]).length;
+  document.getElementById('pstat-gpa').textContent      = calcGPA(gR.data||[]);
+}
+
+async function saveProfile() {
+  const btn = document.getElementById('save-profile-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  const pw = document.getElementById('p-pw').value;
+  const r  = await put('/profile', {
+    full_name: document.getElementById('p-name').value.trim(),
+    phone:     document.getElementById('p-phone').value.trim(),
+    address:   document.getElementById('p-addr').value.trim(),
+    password:  pw || undefined,
+  });
+  const al = document.getElementById('profile-alert');
+  btn.disabled = false; btn.textContent = '💾 Save Changes';
+  if (r.ok) {
+    al.innerHTML = '<div class="alert alert-ok">✓ Update successful!</div>';
+    toast('Saved!', 'ok');
+    document.getElementById('p-pw').value = '';
+    setTimeout(() => al.innerHTML = '', 3000);
+    await loadProfile();
+    // Update sidebar
+    const me = await get('/me');
+    if (me.ok) { currentUser = me.data.user; loadUserUI(); }
+  } else {
+    al.innerHTML = `<div class="alert alert-err">${r.data.message || 'Error saving information'}</div>`;
+  }
+}
+
+// ─── ROUTER ──────────────────────────────────────────────────────────────────
+function show(name) {
+  ['dash','courses','enrolled','grades','profile'].forEach(s => {
+    document.getElementById('sec-'+s).style.display = s === name ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('nav-'+name)?.classList.add('active');
+  if (name === 'courses')  loadCourses();
+  if (name === 'enrolled') loadEnrolled();
+  if (name === 'grades')   loadGrades();
+  if (name === 'profile')  loadProfile();
+}
+
+initPage();
+</script>
+</body>
+</html>
