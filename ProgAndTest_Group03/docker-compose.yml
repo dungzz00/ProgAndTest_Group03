@@ -1,0 +1,45 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    container_name: edums_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: edums
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+    volumes:
+      - edums_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+  app:
+    build: .
+    container_name: edums_flask
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: appuser
+      DB_PASSWORD: apppassword
+      DB_NAME: edums
+      SECRET_KEY: edums_jwt_secret_2024
+      FLASK_ENV: development
+    depends_on:
+      db:
+        condition: service_healthy
+  web:
+    image: nginx:alpine
+    container_name: edums_web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html/frontend
+volumes:
+  edums_db_data:
